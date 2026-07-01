@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIcon,
   CheckCircleIcon,
@@ -7,51 +7,34 @@ import {
   Share2Icon,
   TrendingUpIcon,
 } from "lucide-react";
+import api from "../api/axios";
 
 const Dashboard = () => {
-  const [stats] = useState({
-    scheduled: 1,
-    published: 8,
-    connectedAccounts: 2,
-  });
+  const [stats, setStats] = useState({ scheduled: 0, published: 0, connectedAccounts: 0 });
+  const [activities, setActivities] = useState<any[]>([]);
 
-  const [activities] = useState([
-    {
-      _id: "1",
-      description: "Published post to instagram",
-      createdAt: "2026-05-19T16:49:06",
-    },
-    {
-      _id: "2",
-      description: "Published post to instagram",
-      createdAt: "2026-05-19T13:51:06",
-    },
-    {
-      _id: "3",
-      description: "Published post to instagram",
-      createdAt: "2026-05-13T15:39:15",
-    },
-    {
-      _id: "4",
-      description: "Published post to linkedin",
-      createdAt: "2026-05-13T14:45:05",
-    },
-    {
-      _id: "5",
-      description: "Published post to Facebook",
-      createdAt: "2026-05-13T14:04:06",
-    },
-    {
-      _id: "6",
-      description: "Published post to linkedin",
-      createdAt: "2026-05-08T19:38:02",
-    },
-    {
-      _id: "7",
-      description: "Published post to X / Twitter",
-      createdAt: "2026-05-08T18:45:02",
-    },
-  ]);
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const [postsRes, accountsRes, activityRes] = await Promise.all([
+          api.get("/api/posts"),
+          api.get("/api/accounts"),
+          api.get("/api/activity"),
+        ]);
+
+        const posts = postsRes.data;
+        setStats({
+          scheduled: posts.filter((p: any) => p.status === 'scheduled').length,
+          published: posts.filter((p: any) => p.status === 'published').length,
+          connectedAccounts: accountsRes.data.filter((a: any) => a.status === 'connected').length,
+        })
+        setActivities(activityRes.data)
+      } catch (error: any) {
+        console.error("Error fetching dashboard data", error)
+      }
+    };
+    fetchDashboardData();
+  }, [])
 
   const statCards = [
     {
